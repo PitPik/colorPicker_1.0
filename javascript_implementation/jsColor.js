@@ -98,7 +98,8 @@
 				var onOff = off ? 'removeEventListener' : 'addEventListener',
 					focusListener = function(e) {
 						var input = this,
-							position = {left: input.offsetLeft, top: input.offsetTop},
+							inputRect = input.getBoundingClientRect(),
+							position = {left: inputRect.left, top: inputRect.top},
 							index = multiple ? Array.prototype.indexOf.call(elms, this) : 0,
 							colorPicker = colorPickers[index] ||
 								(colorPickers[index] = createInstance(this, config)),
