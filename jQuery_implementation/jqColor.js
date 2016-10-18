@@ -91,7 +91,7 @@
 						instance;
 
 					for (var n in config) {
-						initConfig[n] = config[n]; 
+						initConfig[n] = config[n];
 					}
 					instance = new initConfig.klass(initConfig);
 					instance.color.options._instance = instance.color;
@@ -133,10 +133,18 @@
 						waitTimer = setInterval(function() { // compensating late style on onload in colorPicker
 							if (colorPickers.current.cssIsReady) {
 								waitTimer = clearInterval(waitTimer);
-								$colorPicker.show(colorPicker.color.options.animationSpeed);
+								$colorPicker.show(colorPicker.color.options.animationSpeed, function() {
+									// Color picker is out of screen
+									if($colorPicker.height() + $colorPicker.offset().top - window.scrollY > window.innerHeight) {
+										$colorPicker.css('top', (window.scrollY + window.innerHeight - $colorPicker.height())+'px');
+									}
+									if($colorPicker.width() + $colorPicker.offset().left - window.scrollX > window.innerWidth) {
+										$colorPicker.css('left', (window.scrollX + window.innerWidth - $colorPicker.width())+'px');
+									}
+								});
 							}
 						}, 10);
-						
+
 					});
 
 					$(window)[onOff]('mousedown.colorPicker', function(e) {
