@@ -225,7 +225,9 @@
 				if (!ranges[typ][typ]) { // no alpha|HEX
 					if (type !== typ && typ !== 'XYZ') {
 						from = exceptions[typ] || 'rgb';
-						colors[typ] = convert[from + '2' + typ](colors[from]);
+						if (typ !== from) {
+							colors[typ] = convert[from + '2' + typ](colors[from]);
+						}
 					}
 
 					if (!RND[typ]) RND[typ] = {};
