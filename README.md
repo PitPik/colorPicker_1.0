@@ -15,7 +15,7 @@ Now with new implementations for [JavaScript](javascript_implementation) and [jQ
 
 ## Demo & integration
 
-See **demo** at [dematte.at/colorPicker](http://dematte.at/colorPicker) or check out a simple jQuery integration at [dematte.at/colorPicker/jQuery_implementation](http://www.dematte.at/colorPicker/jQuery_implementation/) and [jQuery_implementation/jqColor.js](jQuery_implementation) or the javaScript implementation at [dematte.at/colorPicker/javaScript_implementation](http://www.dematte.at/colorPicker/javaScript_implementation/) and [javascript_implementation/jsColor.js](javascript_implementation)
+See **demo** at [dematte.at/colorPicker](http://dematte.at/colorPicker) or check out a simple jQuery integration at [dematte.at/colorPicker/jQuery_implementation](http://www.dematte.at/colorPicker/jQuery_implementation/) and [jQuery_implementation/jqColor.js](jQuery_implementation) or the javaScript implementation at [dematte.at/colorPicker/javaScript_implementation](http://www.dematte.at/cpn/javaScript_implementation/) and [javascript_implementation/jsColor.js](javascript_implementation)
 
 <img src="images/screen-shot-all.png" />
 
