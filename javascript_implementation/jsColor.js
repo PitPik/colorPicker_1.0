@@ -90,7 +90,7 @@
 					};
 
 				for (var n in config) {
-					initConfig[n] = config[n]; 
+					initConfig[n] = config[n];
 				}
 				return new initConfig.klass(initConfig);
 			},
@@ -109,11 +109,13 @@
 							atrect = isStatic ? {left: 0, top: 0} : appendTo.getBoundingClientRect(),
 							waitTimer = 0;
 
+
 						options.color = extractValue(elm); // brings color to default on reset
-						colorPickerUI.style.cssText = 
+						// top = (top+);
+						colorPickerUI.style.cssText =
 							'position: absolute;' + (!colorPickers[index].cssIsReady ? 'display: none;' : '') +
 							'left:' + (position.left + options.margin.left - atrect.left) + 'px;' +
-							'top:' + (position.top + +input.offsetHeight + options.margin.top - atrect.top) + 'px;';
+							'top:' + (position.top + input.offsetHeight + options.margin.top - atrect.top) + 'px;';
 
 						if (!multiple) {
 							options.input = elm;
@@ -127,6 +129,14 @@
 							if (colorPickers.current.cssIsReady) {
 								waitTimer = clearInterval(waitTimer);
 								colorPickerUI.style.display = 'block';
+
+								// Color picker is out of screen
+								if(colorPickerUI.offsetHeight + colorPickerUI.offsetTop - window.scrollY > window.innerHeight) {
+										colorPickerUI.style.top = (window.scrollY + window.innerHeight - colorPickerUI.offsetHeight)+'px';
+								}
+								if(colorPickerUI.offsetWidth + colorPickerUI.offsetLeft - window.scrollX > window.innerWidth) {
+										colorPickerUI.style.left = (window.scrollX + window.innerWidth - colorPickerUI.offsetWidth)+'px';
+								}
 							}
 						}, 10);
 					},
