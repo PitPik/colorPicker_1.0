@@ -1,8 +1,9 @@
-;(function(window, undefined){
+;(function(window, namespace){
 	"use strict"
 
-	var _data = window.ColorPicker, // will be deleted in buildView() and holds:
-		// window.ColorPicker = { // comes from colorPicker.data.js and will be overwritten.
+	var	document = window.document,
+		_data = namespace.ColorPicker, // will be deleted in buildView() and holds:
+		// namespace.ColorPicker = { // comes from colorPicker.data.js and will be overwritten.
 		// 	_html: ..., // holds the HTML markup of colorPicker
 		// 	_cssFunc: ..., // CSS for all the sliders
 		// 	_cssMain: ..., // CSS of the GUI
@@ -68,7 +69,8 @@
 				mode: 'rgb-b',
 				fps: 60, // 1000 / 60 = ~16.7ms
 				delayOffset: 8,
-				CSSPrefix: 'cp-',
+				CSSPrefixIsolate: '',	//prevent classes with higher weight
+				CSSPrefix: 'cp-',	//for internal classes
 				allMixDetails: true,
 				alphaBG: 'w',
 				imagePath: ''
@@ -104,10 +106,10 @@
 				// actionCallback: undefined,
 				// convertCallback: undefined,
 			};
-			initInstance(this, options || {});
+			initInstance(this, options || {});
 		};
 
-	window.ColorPicker = ColorPicker; // export differently
+	namespace.ColorPicker = ColorPicker; // export differently
 	ColorPicker.addEvent = addEvent;
 	ColorPicker.removeEvent = removeEvent;
 	ColorPicker.getOrigin = getOrigin;
@@ -198,7 +200,7 @@
 				memory[n] = {r: tmp[0], g: tmp[1], b: tmp[2], a: tmp[3]}
 			}
 			memos[n].style.cssText = 'background-color: ' + (memory && memory[n] !== undefined ?
-				color2string(memory[n]) + ';' + getOpacityCSS(memory[n]['a'] || 1) : 'rgb(0,0,0);');
+				color2string(memory[n]) + ';' + getOpacityCSS(memory[n]['a'] || 1) : 'rgb(0,0,0);');
 		}
 	};
 
@@ -215,7 +217,7 @@
 		}
 		_isIE = document.createStyleSheet !== undefined && document.getElementById || !!window.MSInputMethodContext;
 		_doesOpacity = typeof document.body.style.opacity !== 'undefined';
-		_colorInstance = new Colors(THIS.options);
+		_colorInstance = new namespace.Colors(THIS.options);
 		// We transfer the responsibility to the instance of Color (to save space and memory)
 		delete THIS.options;
 		_options = _colorInstance.options;
@@ -301,25 +303,27 @@
 	function buildView(THIS) {
 		var app = document.createElement('div'),
 			prefix = _options.CSSPrefix,
+			prefixIsolate = _options.CSSPrefixIsolate ? _options.CSSPrefixIsolate+' ':'',
 			urlData = 'data:image/png;base64,',
 			addStyleSheet = function(cssText, id) {
-				var style = document.createElement('style');
+				var style = document.createElement('style'),
+					head = document.head || document.getElementsByTagName("head")[0] || document.body;
 
 				style.setAttribute('type', 'text/css');
 				if (id) {
 					style.setAttribute('id', id);
 				}
-				if (!style.styleSheet) {
-					style.appendChild(document.createTextNode(cssText));
-				}
-				document.getElementsByTagName('head')[0].appendChild(style);
 				if (style.styleSheet) { // IE compatible
-					document.styleSheets[document.styleSheets.length-1].cssText = cssText;
+					style.styleSheet.cssText = cssText;
+				} else { //other browsers
+					style.innerHTML = cssText;
 				}
+				head.appendChild(style);
 			},
 			processCSS = function(doesBAS64){
 				// CSS - system
 				_data._cssFunc = _data._cssFunc.
+					replace(/‰/g, prefixIsolate).
 					replace(/§/g, prefix).
 					replace('_patches.png', doesBAS64 ? urlData + _data._patchesPng : _options.imagePath + '_patches.png').
 					replace('_vertical.png', doesBAS64 ? urlData + _data._verticalPng : _options.imagePath + '_vertical.png').
@@ -329,6 +333,7 @@
 				// CSS - main
 				if (!_options.customCSS) {
 					_data._cssMain = _data._cssMain.
+						replace(/‰/g, prefixIsolate).
 						replace(/§/g, prefix).
 						replace('_bgs.png', doesBAS64 ? urlData + _data._bgsPng : _options.imagePath + '_bgs.png').
 						replace('_icons.png', doesBAS64 ? urlData + _data._iconsPng : _options.imagePath + '_icons.png').
@@ -440,7 +445,10 @@
 	function installEventListeners(THIS, off) {
 		var onOffEvent = off ? removeEvent : addEvent;
 
-		onOffEvent(_nodes.colorPicker, 'mousedown', function(e) {
+		onOffEvent(_isIE ? document.body : window, 'mouseup', stopChange);
+		onOffEvent(_isIE ? document.body : window, 'touchend', stopChange);
+
+		function touchStart_MouseDown(e) {
 			var event = e || window.event,
 				page = getPageXY(event),
 				target = (event.button || event.which) < 2 ?
@@ -494,6 +502,7 @@
 				_mainTarget.style.display = ''; // ??? for resizer...
 				_mouseMoveAction(event);
 				addEvent(_isIE ? document.body : window, 'mousemove', _mouseMoveAction);
+				addEvent(_isIE ? document.body : window, 'touchmove', _mouseMoveAction);
 				_renderTimer = window[requestAnimationFrame](renderAll);
 			} else {
 				// console.log(className)
@@ -506,7 +515,10 @@
 				return preventDefault(event);
 				// document.activeElement.blur();
 			}
-		});
+		};
+
+		onOffEvent(_nodes.colorPicker, 'mousedown', touchStart_MouseDown);
+		onOffEvent(_nodes.colorPicker, 'touchstart', touchStart_MouseDown);
 
 		onOffEvent(_nodes.colorPicker, 'click', function(e) {
 			focusInstance(THIS);
@@ -530,8 +542,6 @@
 		});
 	}
 
-	addEvent(_isIE ? document.body : window, 'mouseup', stopChange);
-
 	// ------------------------------------------------------ //
 	// --------- Event listner's callback functions  -------- //
 	// -------------------------------------------------------//
@@ -546,6 +556,7 @@
 			// }
 			window[cancelAnimationFrame](_renderTimer);
 			removeEvent(_isIE ? document.body : window, 'mousemove', _mouseMoveAction);
+			removeEvent(_isIE ? document.body : window, 'touchmove', _mouseMoveAction);
 			if (_delayState) { // hapens on inputs
 				_valueType = {type: 'alpha'};
 				renderAll();
@@ -884,7 +895,7 @@
 		// think this over again, does this need to be like this??
 		if (buttonAction) {
 			preRenderAll(_colors);
-			_mouseMoveAction = _mouseMoveAction || true; // !!!! search for: // this is dirty...
+			_mouseMoveAction = _mouseMoveAction || true; // !!!! search for: // this is dirty...
 			stopChange(e, buttonAction);
 		}
 	}
@@ -1036,7 +1047,7 @@
 			colors['rgbaMixBGMix' + bgType].WCAG2Ratio >= 7 ? 'green' :
 			colors['rgbaMixBGMix' + bgType].WCAG2Ratio >= 4.5 ? 'orange': '';
 		renderVars.noRGBZ = _options['no' + _options.mode.type.toUpperCase() + _options.mode.z] ?
-			(_options.mode.z === 'g' && colors.rgb.g < 0.59 || _options.mode.z === 'b' || _options.mode.z === 'r' ?
+			(_options.mode.z === 'g' && colors.rgb.g < 0.59 || _options.mode.z === 'b' || _options.mode.z === 'r' ?
 			'dark' : 'light') : undefined;
 	}
 
@@ -1152,9 +1163,9 @@
 			colors._rgb.b !== colors.rgb.b
 		] : [];
 		if (tmp.join('') !== cashedVars.outOfGammut) {
-			nodes.rgb_r_labl.firstChild.data = tmp[0] ? '!' : ' ';
-			nodes.rgb_g_labl.firstChild.data = tmp[1] ? '!' : ' ';
-			nodes.rgb_b_labl.firstChild.data = tmp[2] ? '!' : ' ';
+			nodes.rgb_r_labl.firstChild.data = tmp[0] ? '!' : '.';
+			nodes.rgb_g_labl.firstChild.data = tmp[1] ? '!' : '.';
+			nodes.rgb_b_labl.firstChild.data = tmp[2] ? '!' : '.';
 			cashedVars.outOfGammut = tmp.join('');
 		}
 		if (renderVars.noRGBZ) {
@@ -1290,16 +1301,18 @@
 	}
 
 	function getPageXY(e) {
-		var doc = window.document;
+		var doc = window.document,
+			_e = (typeof e.changedTouches !== 'undefined' && e.changedTouches.length)?
+					e.changedTouches[0] : e;
 
 		return {
-			X: e.pageX || e.clientX + doc.body.scrollLeft + doc.documentElement.scrollLeft,
-			Y: e.pageY || e.clientY + doc.body.scrollTop + doc.documentElement.scrollTop
+			X: _e.pageX || _e.clientX + doc.body.scrollLeft + doc.documentElement.scrollLeft,
+			Y: _e.pageY || _e.clientY + doc.body.scrollTop + doc.documentElement.scrollTop
 		};
 	}
 
 	function addEvent(obj, type, func) {
-		addEvent.cache = addEvent.cache || {
+		addEvent.cache = addEvent.cache || {
 			_get: function(obj, type, func, checkOnly) {
 				var cache = addEvent.cache[type] || [];
 
@@ -1411,4 +1424,4 @@
 		return _renderTimer = null;
 	};
 
-})(window);
+})(window, CPNamespace||window);
